@@ -46,3 +46,34 @@ class RandomProblem:
 
 
         print("これからファイル出力するよ")
+
+        network_text = open("random_network.txt", "w", encoding = "utf-8")
+
+        network_text.write("cell_num = {}\n".format(self.cell_num))
+        network_text.write("net_num = {}\n".format(self.net_num))
+        network_text.write("(cell, net)\n")
+        for i in range(self.cell_num):
+            for net in self.net_connect_cell_lists[i]:
+                network_text.write("({}, {})\n".format(i + 1, net))
+        network_text.write("cell_size\n")
+        for i in range(self.cell_num):
+            network_text.write("{}: {}\n".format(i + 1, self.cell_size_list[i]))
+        network_text.write("lock_a_cell\n")
+        for cell in self.lock_a_cell_set:
+            network_text.write("{}\n".format(cell))
+
+        network_text.write("lock_b_cell\n")
+        for cell in self.lock_b_cell_set:
+            network_text.write("{}\n".format(cell))
+
+        network_text.write("block_size_ratio = {}\n".format(self.block_size_ratio))
+        network_text.write("min_cell_num_a = {}\n".format(self.block_a_min_cell_num_constraint))
+        network_text.write("min_cell_num_b = {}\n".format(self.block_b_min_cell_num_constraint))
+
+        network_text.close()
+        
+
+        
+
+        
+        

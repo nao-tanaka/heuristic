@@ -504,8 +504,10 @@ if __name__ == "__main__":
 
     # Trueならランダムなネットワークを作る
 
-    random = True
+    random = False
+    read_network = True
 
+    
     if random:
         from make_random_problem import RandomProblem
         print("max_cell_num:")
@@ -516,6 +518,23 @@ if __name__ == "__main__":
         max_cell_size = int(input())
 
         problem = RandomProblem(max_cell_num, max_net_num, max_cell_size)
+
+    elif read_network:
+        
+        n = len(sys.argv)
+        if n == 1:
+            fin = sys.stdin
+        elif n == 2:
+            fin = open(sys.argv[1], "rt")
+        else:
+            print("引数間違い")
+            exit(1)
+
+        from network_reader import NetworkReader
+
+        network_reader = NetworkReader()
+        problem = network_reader.read(fin)
+        
 
     else:
         from sample_problem import SampleProblem

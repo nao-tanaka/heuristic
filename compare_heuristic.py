@@ -9,6 +9,7 @@ if __name__ == "__main__":
 
 
     random = False
+    read_network = True
 
     if random:
         from make_random_problem import RandomProblem
@@ -30,25 +31,22 @@ if __name__ == "__main__":
 
         print("make_problem_end")
 
-        naive_stime = time.process_time()
+    elif read_network:
 
-        from naive_heuristic import naive_heuristic, make_data_structure
+        n = len(sys.argv)
+        if n == 1:
+            fin = sys.stdin
+        elif n == 2:
+            fin = open(sys.argv[1], "rt")
+        else:
+            print("引数間違い")
+            exit(1)
 
-        network, block_a, block_b, next_free_cell_set = make_data_structure(problem)
+        from network_reader import NetworkReader
 
-        naive_answer = naive_heuristic(network, block_a, block_b, next_free_cell_set)
-
-        naive_etime = time.process_time()
-
-        bucket_stime = time.process_time()
-
-        from bucket_heuristic import bucket_heuristic, make_data_structure
-
-        network, block_a, block_b, bucket_sort, free_cell_set, init_cell_list = make_data_structure(problem)
-
-        bucket_answer = bucket_heuristic(network, block_a, block_b, bucket_sort, free_cell_set, init_cell_list)
-
-        bucket_etime = time.process_time()
+        network_reader = NetworkReader()
+        problem = network_reader.read(fin)
+        
 
     else:
 
@@ -57,43 +55,42 @@ if __name__ == "__main__":
 
         problem = SampleProblem()
 
-        naive_stime = time.process_time()
+    naive_stime = time.process_time()
 
-        from naive_heuristic import naive_heuristic, make_data_structure
+    from naive_heuristic import naive_heuristic, make_data_structure
 
-        network, block_a, block_b, next_free_cell_set = make_data_structure(problem)
+    network, block_a, block_b, next_free_cell_set = make_data_structure(problem)
 
-        naive_answer = naive_heuristic(network, block_a, block_b, next_free_cell_set)
+    naive_answer = naive_heuristic(network, block_a, block_b, next_free_cell_set)
 
-        naive_etime = time.process_time()
+    naive_etime = time.process_time()
 
-        bucket_stime = time.process_time()
+    bucket_stime = time.process_time()
 
-        from bucket_heuristic import bucket_heuristic, make_data_structure
+    from bucket_heuristic import bucket_heuristic, make_data_structure
 
-        network, block_a, block_b, bucket_sort, free_cell_set, init_cell_list = make_data_structure(problem)
+    network, block_a, block_b, bucket_sort, free_cell_set, init_cell_list = make_data_structure(problem)
+    
+    bucket_answer = bucket_heuristic(network, block_a, block_b, bucket_sort, free_cell_set, init_cell_list)
 
-        bucket_answer = bucket_heuristic(network, block_a, block_b, bucket_sort, free_cell_set, init_cell_list)
-
-        bucket_etime = time.process_time()
+    bucket_etime = time.process_time()
 
 
-    # min_cutsetの時のパーティションが、制約を満たしているかを調べる
-    meet_constraint = True
+    debug = False
+    if debug:
+        print("cell_num:{} net_num{}".format(problem.cell_num, problem.net_num))
 
-    print("cell_num:{} net_num{}".format(problem.cell_num, problem.net_num))
-
-    print("net_connect_cell_lists")
-    print(problem.net_connect_cell_lists)
-    print("problem.cell_connect_net_lists")
-    print(problem.cell_connect_net_lists)
-    print("lock_a_cell_set")
-    print(problem.lock_a_cell_set)
-    print("lock_b_cell_set")
-    print(problem.lock_b_cell_set)
-    print("block_size_ratio: {}".format(problem.block_size_ratio))
-    print("block_a_min_cell_num: {}".format(problem.block_a_min_cell_num_constraint))
-    print("block_b_min_cell_num: {}".format(problem.block_b_min_cell_num_constraint))
+        print("net_connect_cell_lists")
+        print(problem.net_connect_cell_lists)
+        print("problem.cell_connect_net_lists")
+        print(problem.cell_connect_net_lists)
+        print("lock_a_cell_set")
+        print(problem.lock_a_cell_set)
+        print("lock_b_cell_set")
+        print(problem.lock_b_cell_set)
+        print("block_size_ratio: {}".format(problem.block_size_ratio))
+        print("block_a_min_cell_num: {}".format(problem.block_a_min_cell_num_constraint))
+        print("block_b_min_cell_num: {}".format(problem.block_b_min_cell_num_constraint))
 
     print("naive_cutset_size = {}".format(naive_answer[0]))
     print("bucket_cutset_size = {}".format(bucket_answer[0]))

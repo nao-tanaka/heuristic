@@ -6,7 +6,7 @@ from naive_cell import Cell
 from network import Network
 from block import Block
 
-
+debug = False
 # どちらのブロックかを表す
 # transitionsの方が良いか
 class WhichBlock(Enum):
@@ -50,8 +50,8 @@ def search_basecell(network, block_a, block_b, free_cell_set):
     
     for cell in free_cell_set:
 
-        
-        # print("searching cell.{}".format(cell.identifier))
+        if debug:
+            print("searching cell.{}".format(cell.identifier))
 
         # block_aのセル数がセル数の制約と等しいなら、block_aのセルは選ばない
         if block_a.min_cell_num_constraint == block_a.cell_num and cell.which_block == block_a.which_block:
@@ -84,8 +84,6 @@ def search_basecell(network, block_a, block_b, free_cell_set):
                 if temp_dif < dif_from_best:
                     basecell = cell
                     max_gain = cell_gain
-    if basecell is None:
-        print("basecell not found")
                     
     return basecell, max_gain
 
@@ -95,7 +93,6 @@ def search_basecell(network, block_a, block_b, free_cell_set):
 def partition(network, block_a, block_b, next_free_cell_set):
 
     free_cell_set = set(next_free_cell_set)
-    # next_free_cell_set.clear()
 
     cutset_size = 0
     for net_index in range(network.net_num):
@@ -114,9 +111,9 @@ def partition(network, block_a, block_b, next_free_cell_set):
     min_cutset_block_a_in_pass = None
     min_cutset_block_b_in_pass = None
     
-
-    for cell in network.cell_list:
-        print("id:{} block:{}".format(cell.identifier, cell.which_block))
+    if debug:
+        for cell in network.cell_list:
+            print("id:{} block:{}".format(cell.identifier, cell.which_block))
     
 
     while True:
@@ -133,12 +130,12 @@ def partition(network, block_a, block_b, next_free_cell_set):
                 from_block = block_b
                 to_block = block_a
 
-            print("move")
-            print("id:{}, gain:{}".format(basecell.identifier, gain))
+            if debug:
+                print("move")
+                print("id:{}, gain:{}".format(basecell.identifier, gain))
 
             from_block.remove_cell(basecell)
             to_block.add_cell(basecell)
-            # next_free_cell_set.add(basecell)
             free_cell_set.remove(basecell)
             basecell.switch_block(to_block.which_block)
 
@@ -207,7 +204,6 @@ def make_data_structure(problem):
             block_b.add_cell(cell)
         else:
             if block_b.cell_num < block_b.min_cell_num_constraint:
-                print("cell{} add block_b".format(cell_i + 1))
                 cell = Cell(cell_i + 1, size, net_list, WhichBlock.B)
                 cell_list.append(cell)
                 for net_index in net_list:
@@ -245,8 +241,9 @@ def naive_heuristic(network, block_a, block_b, next_free_cell_set):
     while updated:
         min_cutset_size_in_pass, min_cutset_block_a_in_pass, min_cutset_block_b_in_pass, next_free_cell_set = partition(network, block_a, block_b, next_free_cell_set)
 
-        print("min_cutset_size_in_pass = {}".format(min_cutset_size_in_pass))
-        print("/////////////////////////////////////////////////////")
+        if debug:
+            print("min_cutset_size_in_pass = {}".format(min_cutset_size_in_pass))
+            print("/////////////////////////////////////////////////////")
         if min_cutset_size > min_cutset_size_in_pass:
             min_cutset_size = min_cutset_size_in_pass
             min_cutset_block_a = min_cutset_block_a_in_pass
@@ -254,17 +251,19 @@ def naive_heuristic(network, block_a, block_b, next_free_cell_set):
 
         else:
             updated = False
+
+    if debug:
+        block_a_cell_list = []
+        for cell in min_cutset_block_a:
+            block_a_cell_list.append(cell.identifier)
+        print("block_a = {}".format(block_a_cell_list))    
+        print("block_a_size = {}".format(min_cutset_block_a_size))
+        print("max_const = {}".format(block_a.max_size_constraint))
+        print("min_const = {}".format(block_a.min_size_constraint))
+
         
-        
-    
     # min_cutsetの時のパーティションが、制約を満たしているかを調べる
     meet_constraint = True
-
-    block_a_cell_list = []
-    for cell in min_cutset_block_a:
-        block_a_cell_list.append(cell.identifier)
-    print("block_a = {}".format(block_a_cell_list))
-    print(min_cutset_size)
     if len(min_cutset_block_a) < block_a.min_cell_num_constraint:
         meet_constraint = False
     if len(min_cutset_block_b) < block_b.min_cell_num_constraint:
@@ -272,11 +271,6 @@ def naive_heuristic(network, block_a, block_b, next_free_cell_set):
     min_cutset_block_a_size = 0
     for cell in min_cutset_block_a:
         min_cutset_block_a_size += cell.size
-
-    print("block_a_size = {}".format(min_cutset_block_a_size))
-    print("max_const = {}".format(block_a.max_size_constraint))
-    print("min_const = {}".format(block_a.min_size_constraint))
-
     if min_cutset_block_a_size > block_a.max_size_constraint:
         meet_constraint = False
     if min_cutset_block_a_size < block_a.min_size_constraint:
@@ -292,6 +286,9 @@ if __name__ == "__main__":
     import sys
 
     random = False
+    read_network = True
+
+    
     
     if random: 
         from make_random_problem import RandomProblem
@@ -303,8 +300,23 @@ if __name__ == "__main__":
         max_cell_size = int(input())
     
         problem = RandomProblem(max_cell_num, max_net_num, max_cell_size)
-        from sample_problem import Problem
 
+    elif read_network:
+
+        n = len(sys.argv)
+        if n == 1:
+            fin = sys.stdin
+        elif n == 2:
+            fin = open(sys.argv[1], "rt")
+        else:
+            print("引数間違い")
+            exit(1)
+
+        from network_reader import NetworkReader
+
+        network_reader = NetworkReader()
+        problem = network_reader.read(fin)
+        
     else:
         from sample_problem import SampleProblem
         problem = SampleProblem()
