@@ -43,3 +43,6 @@ class RandomProblem:
         # self.block_size_ratio = random.randrange(9) / 10
         # self.block_a_min_cell_num_constraint = random.randrange(self.cell_num // 10)
         # self.block_b_min_cell_num_constraint = random.randrange(self.cell_num // 10)
+
+
+        print("これからファイル出力するよ")
