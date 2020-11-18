@@ -102,20 +102,74 @@ def calc_gain(cell, network):
 # base_netに属するすべてのフリーなセルに対して計算を行う
 def update_neighbor_gain(base_cell, network, free_cell_set, bucket_sort):
 
-    # for base_net in base_cell.net_list:
-        # neighbor_cell_list = []
-        # for neighbor_cell in network.cell_connect_net_list(base_net - 1):
-            # bucket_sort.remove(neighbor_cell)
-            # neighbor_cell_list.append(neighbor_cell)
-
+    free_neighbor_cell_set = set([])
 
     for base_net in base_cell.net_list:
+
+        free_cell_set_connect_base_net = set([])
+        from_cell_list_connect_base_net = []
+        to_cell_list_connect_base_net = []
+        free_f_n = 0
+        lock_f_n = 0
+        free_t_n = 0
+        lock_t_n = 0
         for neighbor_cell in network.cell_connect_net_list(base_net - 1):
-            if neighbor_cell in free_cell_set:
-                bucket_sort.remove_cell(neighbor_cell)
-                new_gain = calc_gain(neighbor_cell, network)
-                neighbor_cell.set_gain(new_gain)
-                bucket_sort.add_cell(neighbor_cell)
+            if not neighbor_cell in free_neighbor_cell_set:
+                if neighbor_cell in free_cell_set:
+                    free_cell_set_connect_base_net.add(neighbor_cell)
+            if neighbor_cell.which_block == base_cell.which_block:
+                if neighbor_cell in free_cell_set:
+                    from_cell_list_connect_base_net.append(neighbor_cell)
+                    free_f_n += 1
+                else:
+                    lock_f_n += 1
+            else:
+                if neighbor_cell in free_cell_set:
+                    to_cell_list_connect_base_net.append(neighbor_cell)
+                    free_t_n += 1
+                else:
+                    lock_t_n += 1
+
+            if lock_f_n > 0 and lock_t_n > 0:
+                break
+        else:
+            for cell in free_cell_set_connect_base_net:
+                if not cell in free_neighbor_cell_set:
+                    bucket_sort.remove_cell(cell)
+            if lock_t_n == 0:
+                if free_t_n == 0:
+                    for cell in from_cell_list_connect_base_net:
+                        cell.add_gain(1)
+                elif free_t_n == 1:
+                    for cell in to_cell_list_connect_base_net:
+                        cell.add_gain(-1)
+
+            free_f_n -= 1
+            lock_t_n += 1
+
+            if lock_f_n == 0:
+                if free_f_n == 0:
+                    for cell in to_cell_list_connect_base_net:
+                        cell.add_gain(-1)
+                elif free_f_n == 1:
+                    for cell in from_cell_list_connect_base_net:
+                        cell.add_gain(1)
+            free_neighbor_cell_set.update(free_cell_set_connect_base_net)
+
+    for cell in free_neighbor_cell_set:
+        bucket_sort.add_cell(cell)
+            
+        
+            
+
+
+    # for base_net in base_cell.net_list:
+        # for neighbor_cell in network.cell_connect_net_list(base_net - 1):
+            # if neighbor_cell in free_cell_set:
+                # bucket_sort.remove_cell(neighbor_cell)
+                # new_gain = calc_gain(neighbor_cell, network)
+                # neighbor_cell.set_gain(new_gain)
+                # bucket_sort.add_cell(neighbor_cell)
 
 
 # バケツの中にセルが存在するゲインの中で、
@@ -282,16 +336,24 @@ def partition(free_cell_set, init_cell_list, block_a, block_b, bucket_sort, netw
             # ベースセルを移動
             if debug:
                 print("move_cell:{} gain = {}".format(basecell.identifier, basecell.gain))
+                print("move_cell_calc_fain = {}".format(calc_gain(basecell, network)))
+            if not basecell.gain == calc_gain(basecell,network):
+                print("gainが間違ってるよ")
 
+            # カットセットをベースセルのゲインだけ変化させる
+            cutset_size -= basecell.gain
+
+            # ベースセルの隣人のゲインを更新
+            update_neighbor_gain(basecell, network, free_cell_set, bucket_sort)
+                
             from_block.remove_cell(basecell)
             bucket_sort.remove_cell(basecell)
             to_block.add_cell(basecell)
-            #init_cell_list.append(basecell)
             free_cell_set.remove(basecell)
             basecell.switch_block(next_block)
 
             # ベースセルの隣人のゲインを更新
-            update_neighbor_gain(basecell, network, free_cell_set, bucket_sort)
+            # update_neighbor_gain(basecell, network, free_cell_set, bucket_sort)
 
             if debug:
                 debug_cell_gain_list = []
@@ -307,9 +369,8 @@ def partition(free_cell_set, init_cell_list, block_a, block_b, bucket_sort, netw
 
 
 
-
             # カットセットをベースセルのゲインだけ変化させる
-            cutset_size -= basecell.gain
+            #cutset_size -= basecell.gain
 
             if debug:
                 print(cutset_size)
